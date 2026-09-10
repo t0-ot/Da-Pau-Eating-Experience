@@ -5,6 +5,9 @@
 #include <time.h>
 #include <string.h>
 
+#define GAME_WIDTH 80
+#define GAME_HEIGHT 20
+
 struct termios original_term;
 
 typedef struct {
@@ -144,16 +147,14 @@ void scoreDisplay(int currentPoints, int spacing) {
 }
 
 void boardViewPort(Point snakeBody[], int snakeSegment, Point fruityCoords[], int fruitAmount, int hiScore) {
-    int height = 20;
-    int width = 80;
     int x = 1;
     int y = 1;
     int i = 0;
     int centeringSpaces = 18;
 
-    for (y = 1; y <= height; y++) {
-        for (x = 1; x <= width; x++) {
-            if (x == 1 || x == width - 40 || y == 1 || y == height || x == width) {
+    for (y = 1; y <= GAME_HEIGHT; y++) {
+        for (x = 1; x <= GAME_WIDTH; x++) {
+            if (x == 1 || x == GAME_WIDTH - 40 || y == 1 || y == GAME_HEIGHT || x == GAME_WIDTH) {
                 printf("\033[38;2;255;105;180m#\033[0m");
             } else if (x == 41 && y == 3){
                 printGradient("    =+= Da Pau Eating Experience =+=   ", 255, 105, 180, 255, 215, 0);
@@ -192,9 +193,9 @@ void boardViewPort(Point snakeBody[], int snakeSegment, Point fruityCoords[], in
                     printf("\033[38;2;0;255;0mM\033[0m");
                 else if (isFruit)
                     printf("\033[38;2;0;255;0mP\033[0m");
-                else if (x < width - 40)
+                else if (x < GAME_WIDTH - 40)
                     printf("\033[38;2;255;182;193m.\033[0m");
-                else if (x >= width - 40 && y != 3 && y != 12 && y != 13 && y != 9 && y != 8)
+                else if (x >= GAME_WIDTH - 40 && y != 3 && y != 12 && y != 13 && y != 9 && y != 8)
                     printf(" ");
             }
         }
@@ -214,8 +215,6 @@ int main(void) {
     int snakeLength = 2;
     int fruitAmount = 1;
     int i = 0;
-    int gameHeight = 20;
-    int gameWidth = 40;
     int menuChoice;
     snake[0].posX = 20;
     snake[0].posY = 10;
@@ -250,7 +249,7 @@ int main(void) {
             printf("Testmode\n");
             enable_raw_mode();
 
-            spawnFruit(fruit, gameWidth, gameHeight, 1);
+            spawnFruit(fruit, GAME_WIDTH - 40, GAME_HEIGHT, 1);
             while (1) {
                 printf("\033[H");
 
@@ -258,16 +257,16 @@ int main(void) {
 
                 if (snake[0].posX == fruit[0].posX && snake[0].posY == fruit[0].posY) {
                     snakeLength++;
-                    spawnFruit(fruit, gameWidth, gameHeight, 1);
+                    spawnFruit(fruit, GAME_WIDTH - 40, GAME_HEIGHT, 1);
                     if (collsionCheck(snake, fruit, snakeLength, fruitAmount, 1, 0))
-                        spawnFruit(fruit, gameWidth, gameHeight, 1);
+                        spawnFruit(fruit, GAME_WIDTH - 40, GAME_HEIGHT, 1);
                 }
 
                 for (i = snakeLength - 1; i > 0; i--) {
                     snake[i] = snake[i - 1];
                 }
 
-                if (!(snakeDirectionHandler(snake, lastDirInput, gameWidth, gameHeight)) || (collsionCheck(snake, snake, snakeLength, 0, 0, 1) && !(charInputHandler(lastDirInput))))
+                if (!(snakeDirectionHandler(snake, lastDirInput, GAME_WIDTH - 40, GAME_HEIGHT)) || (collsionCheck(snake, snake, snakeLength, 0, 0, 1) && !(charInputHandler(lastDirInput))))
                     isDead = 1;
 
                 if (isDead) {
