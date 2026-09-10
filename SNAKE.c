@@ -15,6 +15,107 @@ typedef struct {
     int posY;
 } Point;
 
+int collsionCheck(Point object1[], Point object2[], int objCountAmt1, int objCountAmt2, int incrementBoth, int countFrom);
+int hiScoreCounter(int currentScore, int *highestScore);
+void enable_raw_mode();
+void lastDirInputHandler(Point lastDir[], int numberDirection, int isX);
+int charInputHandler(Point prevDirInput[]);
+int snakeDirectionHandler(Point snake[], Point lastDir[], int viewportWidth, int viewportHeight);
+void printGradient(const char *text, int startR, int startG, int startB, int endR, int endG, int endB);
+void disable_raw_mode();
+void spawnFruit(Point fruit[], int spawnWidth, int spawnHeight, int fruitNumber);
+void scoreDisplay(int currentPoints, int spacing);
+void boardViewPort(Point snakeBody[], int snakeSegment, Point fruityCoords[], int fruitAmount, int hiScore);
+
+int main(void) {
+    srand(time(NULL));
+    int currentHiScore;
+    Point snake[800];
+    Point fruit[50];
+    Point lastDirInput[1];
+    lastDirInput[1].posX = 0;
+    lastDirInput[1].posY = 0;
+    int snakeLength = 2;
+    int fruitAmount = 1;
+    int i = 0;
+    int menuChoice;
+    snake[0].posX = 20;
+    snake[0].posY = 10;
+    char ch;
+    int isDead = 0;
+    printf("=== MARCUS SNAKE GAME ===\n");
+    printf("1. Play\n 2.Quit\n");
+    printf("What would you like to do?: ");
+    scanf("%d", &menuChoice);
+    switch (menuChoice) {
+        case 1:
+            enable_raw_mode();
+
+            while (1) {
+                ch = getchar();
+
+                if (ch == 'q') {
+                    break;
+                }
+
+                if (ch != -1 && ch != 255) {
+                printf("%c", ch);
+                fflush(stdout);
+                }
+            }
+            disable_raw_mode();
+            break;
+        case 2:
+            printf("Thanks for launching me\n");
+            return 0;
+        case 67:
+            printf("Testmode\n");
+            enable_raw_mode();
+
+            spawnFruit(fruit, GAME_WIDTH - 40, GAME_HEIGHT, 1);
+            while (1) {
+                printf("\033[H");
+
+                charInputHandler(lastDirInput);
+
+                if (snake[0].posX == fruit[0].posX && snake[0].posY == fruit[0].posY) {
+                    snakeLength++;
+                    spawnFruit(fruit, GAME_WIDTH - 40, GAME_HEIGHT, 1);
+                    if (collsionCheck(snake, fruit, snakeLength, fruitAmount, 1, 0))
+                        spawnFruit(fruit, GAME_WIDTH - 40, GAME_HEIGHT, 1);
+                }
+
+                for (i = snakeLength - 1; i > 0; i--) {
+                    snake[i] = snake[i - 1];
+                }
+
+                if (!(snakeDirectionHandler(snake, lastDirInput, GAME_WIDTH - 40, GAME_HEIGHT)) || (collsionCheck(snake, snake, snakeLength, 0, 0, 1) && !(charInputHandler(lastDirInput))))
+                    isDead = 1;
+
+                if (isDead) {
+                    snake[0].posX = 20;
+                    snake[0].posY = 10;
+                    lastDirInput[0].posY = 0;
+                    lastDirInput[0].posX = 0;
+                    isDead = 0;
+                    snakeLength = 2;
+                    fruitAmount = 1;
+                }
+
+                boardViewPort(snake, snakeLength, fruit, 1, hiScoreCounter(snakeLength, &currentHiScore));
+                fflush(stdout);
+                usleep(100000);
+            }
+            disable_raw_mode();
+            break;
+        default:
+            printf("Bad input! Please Enter a valid number");
+            return 0;
+
+    }
+    return 0;
+}
+
 int collsionCheck(Point object1[], Point object2[], int objCountAmt1, int objCountAmt2, int incrementBoth, int countFrom) {
     int i ;
     int k ;
@@ -201,94 +302,4 @@ void boardViewPort(Point snakeBody[], int snakeSegment, Point fruityCoords[], in
         }
         printf("\n");
     }
-}
-
-
-int main(void) {
-    srand(time(NULL));
-    int currentHiScore;
-    Point snake[800];
-    Point fruit[50];
-    Point lastDirInput[1];
-    lastDirInput[1].posX = 0;
-    lastDirInput[1].posY = 0;
-    int snakeLength = 2;
-    int fruitAmount = 1;
-    int i = 0;
-    int menuChoice;
-    snake[0].posX = 20;
-    snake[0].posY = 10;
-    char ch;
-    int isDead = 0;
-    printf("=== MARCUS SNAKE GAME ===\n");
-    printf("1. Play\n 2.Quit\n");
-    printf("What would you like to do?: ");
-    scanf("%d", &menuChoice);
-    switch (menuChoice) {
-        case 1:
-            enable_raw_mode();
-
-            while (1) {
-                ch = getchar();
-
-                if (ch == 'q') {
-                    break;
-                }
-
-                if (ch != -1 && ch != 255) {
-                printf("%c", ch);
-                fflush(stdout);
-                }
-            }
-            disable_raw_mode();
-            break;
-        case 2:
-            printf("Thanks for launching me\n");
-            return 0;
-        case 67:
-            printf("Testmode\n");
-            enable_raw_mode();
-
-            spawnFruit(fruit, GAME_WIDTH - 40, GAME_HEIGHT, 1);
-            while (1) {
-                printf("\033[H");
-
-                charInputHandler(lastDirInput);
-
-                if (snake[0].posX == fruit[0].posX && snake[0].posY == fruit[0].posY) {
-                    snakeLength++;
-                    spawnFruit(fruit, GAME_WIDTH - 40, GAME_HEIGHT, 1);
-                    if (collsionCheck(snake, fruit, snakeLength, fruitAmount, 1, 0))
-                        spawnFruit(fruit, GAME_WIDTH - 40, GAME_HEIGHT, 1);
-                }
-
-                for (i = snakeLength - 1; i > 0; i--) {
-                    snake[i] = snake[i - 1];
-                }
-
-                if (!(snakeDirectionHandler(snake, lastDirInput, GAME_WIDTH - 40, GAME_HEIGHT)) || (collsionCheck(snake, snake, snakeLength, 0, 0, 1) && !(charInputHandler(lastDirInput))))
-                    isDead = 1;
-
-                if (isDead) {
-                    snake[0].posX = 20;
-                    snake[0].posY = 10;
-                    lastDirInput[0].posY = 0;
-                    lastDirInput[0].posX = 0;
-                    isDead = 0;
-                    snakeLength = 2;
-                    fruitAmount = 1;
-                }
-
-                boardViewPort(snake, snakeLength, fruit, 1, hiScoreCounter(snakeLength, &currentHiScore));
-                fflush(stdout);
-                usleep(100000);
-            }
-            disable_raw_mode();
-            break;
-        default:
-            printf("Bad input! Please Enter a valid number");
-            return 0;
-
-    }
-    return 0;
 }
