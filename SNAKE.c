@@ -18,36 +18,27 @@ typedef struct {
 int collsionCheck(Point object1[], Point object2[], int objCountAmt1, int objCountAmt2, int incrementBoth, int countFrom);
 int hiScoreCounter(int currentScore, int *highestScore);
 void enable_raw_mode();
-void lastDirInputHandler(Point lastDir[], int numberDirection, int isX);
 int charInputHandler(Point prevDirInput[]);
-int snakeDirectionHandler(Point snake[], Point lastDir[], int viewportWidth, int viewportHeight);
+int snakeDirectionHandler(Point snake[], Point lastDir[]);
 void printGradient(const char *text, int startR, int startG, int startB, int endR, int endG, int endB);
 void disable_raw_mode();
 void spawnFruit(Point fruit[], int spawnWidth, int spawnHeight, int fruitNumber);
 void scoreDisplay(int currentPoints, int spacing);
 void boardViewPort(Point snakeBody[], int snakeSegment, Point fruityCoords[], int fruitAmount, int hiScore);
+int mainMenu();
+int snakePlayer();
 
 int main(void) {
     srand(time(NULL));
     int currentHiScore;
-    Point snake[800];
+    Point snake[800] = {{20, 10}};
     Point fruit[50];
-    Point lastDirInput[1];
-    lastDirInput[1].posX = 0;
-    lastDirInput[1].posY = 0;
+    Point lastDirInput[1] = {{0, 0}};
     int snakeLength = 2;
     int fruitAmount = 1;
     int i = 0;
-    int menuChoice;
-    snake[0].posX = 20;
-    snake[0].posY = 10;
     char ch;
-    int isDead = 0;
-    printf("=== MARCUS SNAKE GAME ===\n");
-    printf("1. Play\n 2.Quit\n");
-    printf("What would you like to do?: ");
-    scanf("%d", &menuChoice);
-    switch (menuChoice) {
+    switch (mainMenu()) {
         case 1:
             enable_raw_mode();
 
@@ -69,7 +60,6 @@ int main(void) {
             printf("Thanks for launching me\n");
             return 0;
         case 67:
-            printf("Testmode\n");
             enable_raw_mode();
 
             spawnFruit(fruit, GAME_WIDTH - 40, GAME_HEIGHT, 1);
@@ -89,15 +79,11 @@ int main(void) {
                     snake[i] = snake[i - 1];
                 }
 
-                if (!(snakeDirectionHandler(snake, lastDirInput, GAME_WIDTH - 40, GAME_HEIGHT)) || (collsionCheck(snake, snake, snakeLength, 0, 0, 1) && !(charInputHandler(lastDirInput))))
-                    isDead = 1;
-
-                if (isDead) {
+                if (!(snakeDirectionHandler(snake, lastDirInput)) || (collsionCheck(snake, snake, snakeLength, 0, 0, 1) && !(charInputHandler(lastDirInput)))) {
                     snake[0].posX = 20;
                     snake[0].posY = 10;
                     lastDirInput[0].posY = 0;
                     lastDirInput[0].posX = 0;
-                    isDead = 0;
                     snakeLength = 2;
                     fruitAmount = 1;
                 }
@@ -107,6 +93,7 @@ int main(void) {
                 usleep(100000);
             }
             disable_raw_mode();
+
             break;
         default:
             printf("Bad input! Please Enter a valid number");
@@ -114,6 +101,16 @@ int main(void) {
 
     }
     return 0;
+}
+
+int mainMenu() {
+    int menuChoice;
+    printf("=== Da Pau Eating Experience ===\n");
+    printf("67. Play Snake\n");
+    printf("2. Quit\n");
+    printf("What would you like to do?: ");
+    scanf("%d", &menuChoice);
+    return menuChoice;
 }
 
 int collsionCheck(Point object1[], Point object2[], int objCountAmt1, int objCountAmt2, int incrementBoth, int countFrom) {
@@ -154,53 +151,36 @@ void enable_raw_mode() {
     tcsetattr(STDIN_FILENO, TCSANOW, &raw);
 }
 
-void lastDirInputHandler(Point lastDir[], int numberDirection, int isX) {
-    if (isX) {
-        lastDir[0].posX = numberDirection;
-        lastDir[0].posY = 0;
-    } else {
-        lastDir[0].posY = numberDirection;
-        lastDir[0].posX = 0;
-    }
-}
-
 int charInputHandler(Point prevDirInput[]) {
     char latest_ch = 0;
     char temp_ch;
-
+    int dx = 0, dy = 0;
 
     while (read(STDIN_FILENO, &temp_ch, 1) > 0) {
         latest_ch = temp_ch;
     }
-    if (latest_ch != 0) {
-        switch (latest_ch) {
-            case 'w':
-                if (prevDirInput[0].posY != 1) {
-                    lastDirInputHandler(prevDirInput, -1, 0);
-                    return 0;
-                    }
-            case 's':
-                if (prevDirInput[0].posY != -1) {
-                    lastDirInputHandler(prevDirInput, 1, 0);
-                    return 0;
-                }
-            case 'a':
-                if (prevDirInput[0].posX != 1) {
-                    lastDirInputHandler(prevDirInput, -1, 1);
-                    return 0;
-                }
-            case 'd':
-                if (prevDirInput[0].posX != -1) {
-                    lastDirInputHandler(prevDirInput, 1, 1);
-                    return 0;
-                }
-        }
+
+    if (latest_ch == 0) return 0;
+
+    switch (latest_ch) {
+        case 'w': dx =  0; dy = -1; break;
+        case 's': dx =  0; dy =  1; break;
+        case 'a': dx = -1; dy =  0; break;
+        case 'd': dx =  1; dy =  0; break;
+        default:  return 1;
+    }
+
+    if (prevDirInput[0].posX * -1 == dx && prevDirInput[0].posY * -1 == dy) {
         return 1;
     }
+
+    prevDirInput[0].posX = dx;
+    prevDirInput[0].posY = dy;
+    return 0;
 }
 
-int snakeDirectionHandler(Point snake[], Point lastDir[], int viewportWidth, int viewportHeight) {
-    if (snake[0].posX + lastDir[0].posX > 1 && snake[0].posX + lastDir[0].posX < viewportWidth && snake[0].posY + lastDir[0].posY > 1 && snake[0].posY + lastDir[0].posY < viewportHeight) {
+int snakeDirectionHandler(Point snake[], Point lastDir[]) {
+    if (snake[0].posX + lastDir[0].posX > 1 && snake[0].posX + lastDir[0].posX < GAME_WIDTH - 40 && snake[0].posY + lastDir[0].posY > 1 && snake[0].posY + lastDir[0].posY < GAME_HEIGHT) {
         snake[0].posX += lastDir[0].posX;
         snake[0].posY += lastDir[0].posY;
         return 1;
@@ -245,6 +225,10 @@ void scoreDisplay(int currentPoints, int spacing) {
         printf("%*s0%d%*s", spacing, "", currentPoints - 2, spacing, "");
     else if (currentPoints - 2 >= 100)
         printf("%*s%d%*s", spacing, "", currentPoints - 2, spacing, "");
+}
+
+int snakePlayer() {
+
 }
 
 void boardViewPort(Point snakeBody[], int snakeSegment, Point fruityCoords[], int fruitAmount, int hiScore) {
