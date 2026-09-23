@@ -15,6 +15,13 @@ typedef struct {
     int posY;
 } Point;
 
+typedef struct {
+    char sym;
+    int r;
+    int g;
+    int b;
+} Canvas;
+
 int collsionCheck(Point object1[], Point object2[], int objCountAmt1, int objCountAmt2, int incrementBoth, int countFrom);
 int hiScoreCounter(int currentScore, int *highestScore);
 void enable_raw_mode();
@@ -24,13 +31,19 @@ void printGradient(const char *text, int startR, int startG, int startB, int end
 void disable_raw_mode();
 void spawnFruit(Point fruit[], int spawnWidth, int spawnHeight, int fruitNumber);
 void scoreDisplay(int currentPoints, int spacing);
-void boardViewPort(Point snakeBody[], int snakeSegment, Point fruityCoords[], int fruitAmount, int hiScore);
 int mainMenu();
 int snakePlayer();
+void canvasIntializer(Canvas cellView[][GAME_WIDTH]);
+void canvasViewPrint(Canvas cellView[][GAME_WIDTH]);
+void canvasStamper(Canvas cellView[][GAME_WIDTH], Point snake[], Point fruit[], int snakeLength, int fruitAmount);
+void cellColorAssignment(Canvas cellView[][GAME_WIDTH], int x, int y, char ch, int r, int g, int b);
+void canvasTextStamper(const char *text, Canvas cellView[][GAME_WIDTH], int x, int y, int startR, int startG, int startB, int endR, int endG, int endB);
+void canvasScoreStamper(Canvas cellView[][GAME_WIDTH], int x, int y, int currentPoints);
 
 int main(void) {
     srand(time(NULL));
     int currentHiScore;
+    Canvas cell[GAME_HEIGHT][GAME_WIDTH];
     Point snake[800] = {{20, 10}};
     Point fruit[50];
     Point lastDirInput[1] = {{0, 0}};
@@ -39,40 +52,24 @@ int main(void) {
     int i = 0;
     char ch;
     switch (mainMenu()) {
-        case 1:
-            enable_raw_mode();
-
-            while (1) {
-                ch = getchar();
-
-                if (ch == 'q') {
-                    break;
-                }
-
-                if (ch != -1 && ch != 255) {
-                printf("%c", ch);
-                fflush(stdout);
-                }
-            }
-            disable_raw_mode();
-            break;
         case 2:
             printf("Thanks for launching me\n");
             return 0;
         case 67:
             enable_raw_mode();
 
-            spawnFruit(fruit, GAME_WIDTH - 40, GAME_HEIGHT, 1);
+            spawnFruit(fruit, GAME_WIDTH - 41, GAME_HEIGHT - 1, 1);
             while (1) {
                 printf("\033[H");
 
                 charInputHandler(lastDirInput);
-
-                if (snake[0].posX == fruit[0].posX && snake[0].posY == fruit[0].posY) {
-                    snakeLength++;
-                    spawnFruit(fruit, GAME_WIDTH - 40, GAME_HEIGHT, 1);
-                    if (collsionCheck(snake, fruit, snakeLength, fruitAmount, 1, 0))
-                        spawnFruit(fruit, GAME_WIDTH - 40, GAME_HEIGHT, 1);
+                for (i = 0; i < fruitAmount; i++) {
+                    if (snake[0].posX == fruit[i].posX && snake[0].posY == fruit[i].posY) {
+                        snakeLength++;
+                        spawnFruit(fruit, GAME_WIDTH - 41, GAME_HEIGHT - 1, fruitAmount);
+                        if (collsionCheck(snake, fruit, snakeLength, fruitAmount, 1, 0))
+                            spawnFruit(fruit, GAME_WIDTH - 41, GAME_HEIGHT - 1, fruitAmount);
+                    }
                 }
 
                 for (i = snakeLength - 1; i > 0; i--) {
@@ -88,7 +85,16 @@ int main(void) {
                     fruitAmount = 1;
                 }
 
-                boardViewPort(snake, snakeLength, fruit, 1, hiScoreCounter(snakeLength, &currentHiScore));
+                canvasIntializer(cell);
+                canvasStamper(cell, snake, fruit, snakeLength, fruitAmount);
+                canvasTextStamper("Da Pau Eating Experience", cell, 48, 3, 255, 105, 180, 255, 215, 0);
+                canvasTextStamper("-== SCORE ==-", cell, 53, 9, 255, 215, 0, 255, 215, 0);
+                canvasTextStamper("-+== HI-SCORE ==+-", cell, 50, 13, 255, 215, 0, 255, 215, 0);
+                canvasScoreStamper(cell, 58, 8, snakeLength);
+                canvasScoreStamper(cell, 58, 12, hiScoreCounter(snakeLength, &currentHiScore));
+                canvasViewPrint(cell);
+                printf("W - UP, S - DOWN, A - LEFT, D - RIGHT");
+
                 fflush(stdout);
                 usleep(100000);
             }
@@ -170,9 +176,8 @@ int charInputHandler(Point prevDirInput[]) {
         default:  return 1;
     }
 
-    if (prevDirInput[0].posX * -1 == dx && prevDirInput[0].posY * -1 == dy) {
+    if (prevDirInput[0].posX * -1 == dx && prevDirInput[0].posY * -1 == dy)
         return 1;
-    }
 
     prevDirInput[0].posX = dx;
     prevDirInput[0].posY = dy;
@@ -180,30 +185,12 @@ int charInputHandler(Point prevDirInput[]) {
 }
 
 int snakeDirectionHandler(Point snake[], Point lastDir[]) {
-    if (snake[0].posX + lastDir[0].posX > 1 && snake[0].posX + lastDir[0].posX < GAME_WIDTH - 40 && snake[0].posY + lastDir[0].posY > 1 && snake[0].posY + lastDir[0].posY < GAME_HEIGHT) {
+    if (snake[0].posX + lastDir[0].posX > 0 && snake[0].posX + lastDir[0].posX < GAME_WIDTH - 41 && snake[0].posY + lastDir[0].posY > 0 && snake[0].posY + lastDir[0].posY < GAME_HEIGHT - 1) {
         snake[0].posX += lastDir[0].posX;
         snake[0].posY += lastDir[0].posY;
         return 1;
     } else
         return 0;
-}
-
-void printGradient(const char *text, int startR, int startG, int startB, int endR, int endG, int endB) {
-    int len = strlen(text);
-    int i = 0;
-    if (len <= 1) {
-        printf("\033[38;2;%d;%d;%d%s\033[0m", startR, startG, startB, text);
-        return;
-    }
-
-    for (i = 0; i < len; i++) {
-        int r = startR + (endR - startR) * i / (len - 1);
-        int g = startG + (endG - startG) * i / (len - 1);
-        int b = startB + (endB - startB) * i / (len - 1);
-
-        printf("\033[38;2;%d;%d;%dm%c", r, g, b, text[i]);
-    }
-    printf("\033[0m");
 }
 
 void disable_raw_mode() {
@@ -213,76 +200,86 @@ void disable_raw_mode() {
 void spawnFruit(Point fruit[], int spawnWidth, int spawnHeight, int fruitNumber) {
     int i = 0;
     for (i = 0; i < fruitNumber; i++) {
-        fruit[i].posX = (rand() % (spawnWidth - 2)) + 2;
-        fruit[i].posY = (rand() % (spawnHeight - 2)) + 2;
+        fruit[i].posX = (rand() % (spawnWidth - 2)) + 1;
+        fruit[i].posY = (rand() % (spawnHeight - 2)) + 1;
     }
 }
 
-void scoreDisplay(int currentPoints, int spacing) {
-    if (currentPoints - 2 < 10)
-        printf("%*s00%d%*s", spacing, "", currentPoints - 2, spacing, "");
-    else if (currentPoints - 2 >= 10 && currentPoints < 100)
-        printf("%*s0%d%*s", spacing, "", currentPoints - 2, spacing, "");
-    else if (currentPoints - 2 >= 100)
-        printf("%*s%d%*s", spacing, "", currentPoints - 2, spacing, "");
+void canvasScoreStamper(Canvas cellView[][GAME_WIDTH], int x, int y, int currentPoints) {
+    int score = currentPoints - 2;
+    if (score < 0)
+        score = 0;
+
+    int hundreds = (score / 100) % 10;
+    int tens     = (score / 10) % 10;
+    int units    = score % 10;
+
+    cellColorAssignment(cellView, x,     y, hundreds + '0', 255, 215, 0);
+    cellColorAssignment(cellView, x + 1, y, tens     + '0', 255, 215, 0);
+    cellColorAssignment(cellView, x + 2, y, units    + '0', 255, 215, 0);
 }
 
 int snakePlayer() {
 
 }
 
-void boardViewPort(Point snakeBody[], int snakeSegment, Point fruityCoords[], int fruitAmount, int hiScore) {
-    int x = 1;
-    int y = 1;
-    int i = 0;
-    int centeringSpaces = 18;
+void cellColorAssignment(Canvas cellView[][GAME_WIDTH], int x, int y, char ch, int r, int g, int b) {
+    cellView[y][x].sym = ch;
+    cellView[y][x].r = r;
+    cellView[y][x].g = g;
+    cellView[y][x].b = b;
+}
 
-    for (y = 1; y <= GAME_HEIGHT; y++) {
-        for (x = 1; x <= GAME_WIDTH; x++) {
-            if (x == 1 || x == GAME_WIDTH - 40 || y == 1 || y == GAME_HEIGHT || x == GAME_WIDTH) {
-                printf("\033[38;2;255;105;180m#\033[0m");
-            } else if (x == 41 && y == 3){
-                printGradient("    =+= Da Pau Eating Experience =+=   ", 255, 105, 180, 255, 215, 0);
-            } else if (x == 41 && y == 12) {
-                scoreDisplay(hiScore, centeringSpaces);
+void canvasIntializer(Canvas cellView[][GAME_WIDTH]) {
+    int x;
+    int y;
 
-            } else if (x == 41 && y == 13) {
-                printf("\033[38;2;255;215;0m          ---- HI-SCORE -----          \033[0m");
-            } else if (x == 41 && y == 8) {
-                scoreDisplay(snakeSegment, centeringSpaces);
-
-            } else if (x == 41 &&  y == 9) {
-                printf("             --- SCORE ---             ");
-            } else {
-                int isSnake = 0;
-                int isFruit = 0;
-                int isSnakeHead = 0;
-                for (i = 0; i < snakeSegment; i++) {
-                    if (snakeBody[i].posX == x && snakeBody[i].posY == y) {
-                        isSnake = 1;
-                    if (i == 0)
-                        isSnakeHead = 1;
-                        break;
-                    }
-                }
-                for (i = 0; i < fruitAmount; i++) {
-                    if (fruityCoords[i].posX == x && fruityCoords[i].posY == y) {
-                        isFruit = 1;
-                        break;
-                    }
-                }
-
-                if (isSnake && !isSnakeHead)
-                    printf("\033[38;2;0;255;0mO\033[0m");
-                else if (isSnake && isSnakeHead)
-                    printf("\033[38;2;0;255;0mM\033[0m");
-                else if (isFruit)
-                    printf("\033[38;2;0;255;0mP\033[0m");
-                else if (x < GAME_WIDTH - 40)
-                    printf("\033[38;2;255;182;193m.\033[0m");
-                else if (x >= GAME_WIDTH - 40 && y != 3 && y != 12 && y != 13 && y != 9 && y != 8)
-                    printf(" ");
+    for (y = 0; y < GAME_HEIGHT; y++) {
+        for (x = 0; x < GAME_WIDTH; x++) {
+            if (x == 0 || x == GAME_WIDTH - 41 || y == 0 || y == GAME_HEIGHT - 1 || x == GAME_WIDTH - 1) {
+                cellColorAssignment(cellView, x, y, '#', 255, 105, 180);
+            } else if (x < GAME_WIDTH - 41) {
+                cellColorAssignment(cellView, x, y, '.', 255, 182, 193);
+            } else if (x >= GAME_WIDTH - 41) {
+                cellColorAssignment(cellView, x, y, ' ', 255, 255, 255);
             }
+        }
+    }
+}
+
+void canvasStamper(Canvas cellView[][GAME_WIDTH], Point snake[], Point fruit[], int snakeLength, int fruitAmount) {
+    int i;
+
+    for (i = 0; i < snakeLength; i++) {
+        if (i == 0)
+            cellColorAssignment(cellView, snake[i].posX, snake[i].posY, 'M', 0, 255, 0);
+        else
+            cellColorAssignment(cellView, snake[i].posX, snake[i].posY, 'O', 0, 255, 0);
+    }
+    for (i = 0; i < fruitAmount; i++) {
+        cellColorAssignment(cellView, fruit[i].posX, fruit[i].posY, 'P', 0, 255, 0);
+    }
+}
+
+void canvasTextStamper(const char *text, Canvas cellView[][GAME_WIDTH], int x, int y, int startR, int startG, int startB, int endR, int endG, int endB) {
+    int len = strlen(text);
+    int i = 0;
+
+    for (i = 0; i < len; i++) {
+        int r = startR + (endR - startR) * i / (len - 1);
+        int g = startG + (endG - startG) * i / (len - 1);
+        int b = startB + (endB - startB) * i / (len - 1);
+
+        cellColorAssignment(cellView, x+i, y, text[i], r, g, b);
+    }
+}
+
+void canvasViewPrint(Canvas cellView[][GAME_WIDTH]) {
+    int x, y;
+
+    for (y = 0; y < GAME_HEIGHT; y++) {
+        for (x = 0; x < GAME_WIDTH; x++) {
+            printf("\033[38;2;%d;%d;%dm%c\033[0m", cellView[y][x].r, cellView[y][x].g, cellView[y][x].b, cellView[y][x].sym);
         }
         printf("\n");
     }
