@@ -1,14 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <termios.h>
-#include <unistd.h>
+#include <windows.h>
+#include <conio.h>
 #include <time.h>
 #include <string.h>
 
 #define GAME_WIDTH 80
 #define GAME_HEIGHT 20
 
-struct termios original_term;
+DWORD original_console_mode;
 
 typedef struct {
     int posX;
@@ -41,8 +41,8 @@ void canvasTextStamper(const char *text, Canvas cellView[][GAME_WIDTH], int x, i
 void canvasScoreStamper(Canvas cellView[][GAME_WIDTH], int x, int y, int currentPoints);
 
 int main(void) {
-    srand(time(NULL));
-    int currentHiScore;
+    srand((unsigned int)time(NULL));
+    int currentHiScore = 0;
     Canvas cell[GAME_HEIGHT][GAME_WIDTH];
     Point snake[800] = {{20, 10}};
     Point fruit[50];
@@ -50,7 +50,7 @@ int main(void) {
     int snakeLength = 2;
     int fruitAmount = 1;
     int i = 0;
-    char ch;
+
     switch (mainMenu()) {
         case 2:
             printf("Thanks for launching me\n");
@@ -96,15 +96,14 @@ int main(void) {
                 printf("W - UP, S - DOWN, A - LEFT, D - RIGHT");
 
                 fflush(stdout);
-                usleep(100000);
+                Sleep(50);
             }
             disable_raw_mode();
 
             break;
         default:
-            printf("Bad input! Please Enter a valid number");
+            printf("Bad input! Please Enter a valid number\n");
             return 0;
-
     }
     return 0;
 }
@@ -115,13 +114,14 @@ int mainMenu() {
     printf("67. Play Snake\n");
     printf("2. Quit\n");
     printf("What would you like to do?: ");
-    scanf("%d", &menuChoice);
+    if (scanf("%d", &menuChoice) != 1) {
+        return 0;
+    }
     return menuChoice;
 }
 
 int collsionCheck(Point object1[], Point object2[], int objCountAmt1, int objCountAmt2, int incrementBoth, int countFrom) {
-    int i ;
-    int k ;
+    int i, k;
     if (incrementBoth) {
         for (i = countFrom; i < objCountAmt1; i++) {
             for (k = 0; k < objCountAmt2; k++) {
@@ -145,34 +145,43 @@ int hiScoreCounter(int currentScore, int *highestScore) {
 }
 
 void enable_raw_mode() {
-    struct termios raw;
-    tcgetattr(STDIN_FILENO, &original_term);
-    raw = original_term;
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
 
-    raw.c_lflag &= ~(ICANON | ECHO);
+    // Enable ANSI escape sequences for Windows Console
+    DWORD outMode = 0;
+    GetConsoleMode(hOut, &outMode);
+    outMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+    SetConsoleMode(hOut, outMode);
 
-    raw.c_cc[VMIN] = 0;
-    raw.c_cc[VTIME] = 0;
+    // Disable line buffering and echo on input
+    GetConsoleMode(hIn, &original_console_mode);
+    DWORD inMode = original_console_mode;
+    inMode &= ~(ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT);
+    SetConsoleMode(hIn, inMode);
+}
 
-    tcsetattr(STDIN_FILENO, TCSANOW, &raw);
+void disable_raw_mode() {
+    HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
+    SetConsoleMode(hIn, original_console_mode);
 }
 
 int charInputHandler(Point prevDirInput[]) {
     char latest_ch = 0;
-    char temp_ch;
     int dx = 0, dy = 0;
 
-    while (read(STDIN_FILENO, &temp_ch, 1) > 0) {
-        latest_ch = temp_ch;
+    // Flush key buffer and grab the latest key pressed
+    while (_kbhit()) {
+        latest_ch = (char)_getch();
     }
 
     if (latest_ch == 0) return 0;
 
     switch (latest_ch) {
-        case 'w': dx =  0; dy = -1; break;
-        case 's': dx =  0; dy =  1; break;
-        case 'a': dx = -1; dy =  0; break;
-        case 'd': dx =  1; dy =  0; break;
+        case 'w': case 'W': dx =  0; dy = -1; break;
+        case 's': case 'S': dx =  0; dy =  1; break;
+        case 'a': case 'A': dx = -1; dy =  0; break;
+        case 'd': case 'D': dx =  1; dy =  0; break;
         default:  return 1;
     }
 
@@ -185,16 +194,14 @@ int charInputHandler(Point prevDirInput[]) {
 }
 
 int snakeDirectionHandler(Point snake[], Point lastDir[]) {
-    if (snake[0].posX + lastDir[0].posX > 0 && snake[0].posX + lastDir[0].posX < GAME_WIDTH - 41 && snake[0].posY + lastDir[0].posY > 0 && snake[0].posY + lastDir[0].posY < GAME_HEIGHT - 1) {
+    if (snake[0].posX + lastDir[0].posX > 0 && snake[0].posX + lastDir[0].posX < GAME_WIDTH - 41 &&
+        snake[0].posY + lastDir[0].posY > 0 && snake[0].posY + lastDir[0].posY < GAME_HEIGHT - 1) {
         snake[0].posX += lastDir[0].posX;
         snake[0].posY += lastDir[0].posY;
         return 1;
-    } else
+    } else {
         return 0;
-}
-
-void disable_raw_mode() {
-    tcsetattr(STDIN_FILENO, TCSANOW, &original_term);
+    }
 }
 
 void spawnFruit(Point fruit[], int spawnWidth, int spawnHeight, int fruitNumber) {
@@ -220,7 +227,7 @@ void canvasScoreStamper(Canvas cellView[][GAME_WIDTH], int x, int y, int current
 }
 
 int snakePlayer() {
-
+    return 0;
 }
 
 void cellColorAssignment(Canvas cellView[][GAME_WIDTH], int x, int y, char ch, int r, int g, int b) {
@@ -231,8 +238,7 @@ void cellColorAssignment(Canvas cellView[][GAME_WIDTH], int x, int y, char ch, i
 }
 
 void canvasIntializer(Canvas cellView[][GAME_WIDTH]) {
-    int x;
-    int y;
+    int x, y;
 
     for (y = 0; y < GAME_HEIGHT; y++) {
         for (x = 0; x < GAME_WIDTH; x++) {
@@ -262,15 +268,15 @@ void canvasStamper(Canvas cellView[][GAME_WIDTH], Point snake[], Point fruit[], 
 }
 
 void canvasTextStamper(const char *text, Canvas cellView[][GAME_WIDTH], int x, int y, int startR, int startG, int startB, int endR, int endG, int endB) {
-    int len = strlen(text);
+    int len = (int)strlen(text);
     int i = 0;
 
     for (i = 0; i < len; i++) {
-        int r = startR + (endR - startR) * i / (len - 1);
-        int g = startG + (endG - startG) * i / (len - 1);
-        int b = startB + (endB - startB) * i / (len - 1);
+        int r = startR + (endR - startR) * i / (len > 1 ? len - 1 : 1);
+        int g = startG + (endG - startG) * i / (len > 1 ? len - 1 : 1);
+        int b = startB + (endB - startB) * i / (len > 1 ? len - 1 : 1);
 
-        cellColorAssignment(cellView, x+i, y, text[i], r, g, b);
+        cellColorAssignment(cellView, x + i, y, text[i], r, g, b);
     }
 }
 
