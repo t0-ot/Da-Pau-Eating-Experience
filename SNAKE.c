@@ -45,20 +45,18 @@ int main(void) {
     int currentHiScore;
     Canvas cell[GAME_HEIGHT][GAME_WIDTH];
     Point snake[800] = {{20, 10}};
-    Point fruit[50];
+    Point fruit[50] = {0};
     Point lastDirInput[1] = {{0, 0}};
-    int snakeLength = 2;
-    int fruitAmount = 1;
-    int i = 0;
-    char ch;
+    int snakeLength = 2, fruitAmount = 1, i = 0;
     switch (mainMenu()) {
         case 2:
             printf("Thanks for launching me\n");
             return 0;
         case 67:
             enable_raw_mode();
-
-            spawnFruit(fruit, GAME_WIDTH - 41, GAME_HEIGHT - 1, 1);
+            for (i = 0; i < fruitAmount; i++) {
+                spawnFruit(fruit, GAME_WIDTH - 41, GAME_HEIGHT - 1, i);
+            }
             while (1) {
                 printf("\033[H");
 
@@ -66,9 +64,13 @@ int main(void) {
                 for (i = 0; i < fruitAmount; i++) {
                     if (snake[0].posX == fruit[i].posX && snake[0].posY == fruit[i].posY) {
                         snakeLength++;
-                        spawnFruit(fruit, GAME_WIDTH - 41, GAME_HEIGHT - 1, fruitAmount);
+                        if (((snakeLength - 2) % 10) == 0) {
+                            fruitAmount++;
+                            spawnFruit(fruit, GAME_WIDTH -41, GAME_HEIGHT - 1, fruitAmount-1);
+                        }
+                        spawnFruit(fruit, GAME_WIDTH - 41, GAME_HEIGHT - 1, i);
                         if (collsionCheck(snake, fruit, snakeLength, fruitAmount, 1, 0))
-                            spawnFruit(fruit, GAME_WIDTH - 41, GAME_HEIGHT - 1, fruitAmount);
+                            spawnFruit(fruit, GAME_WIDTH - 41, GAME_HEIGHT - 1, i);
                     }
                 }
 
@@ -120,8 +122,7 @@ int mainMenu() {
 }
 
 int collsionCheck(Point object1[], Point object2[], int objCountAmt1, int objCountAmt2, int incrementBoth, int countFrom) {
-    int i ;
-    int k ;
+    int i, k;
     if (incrementBoth) {
         for (i = countFrom; i < objCountAmt1; i++) {
             for (k = 0; k < objCountAmt2; k++) {
@@ -158,8 +159,7 @@ void enable_raw_mode() {
 }
 
 int charInputHandler(Point prevDirInput[]) {
-    char latest_ch = 0;
-    char temp_ch;
+    char latest_ch = 0, temp_ch;
     int dx = 0, dy = 0;
 
     while (read(STDIN_FILENO, &temp_ch, 1) > 0) {
@@ -198,11 +198,8 @@ void disable_raw_mode() {
 }
 
 void spawnFruit(Point fruit[], int spawnWidth, int spawnHeight, int fruitNumber) {
-    int i = 0;
-    for (i = 0; i < fruitNumber; i++) {
-        fruit[i].posX = (rand() % (spawnWidth - 2)) + 1;
-        fruit[i].posY = (rand() % (spawnHeight - 2)) + 1;
-    }
+    fruit[fruitNumber].posX = (rand() % (spawnWidth - 2)) + 1;
+    fruit[fruitNumber].posY = (rand() % (spawnHeight - 2)) + 1;
 }
 
 void canvasScoreStamper(Canvas cellView[][GAME_WIDTH], int x, int y, int currentPoints) {
@@ -231,8 +228,7 @@ void cellColorAssignment(Canvas cellView[][GAME_WIDTH], int x, int y, char ch, i
 }
 
 void canvasIntializer(Canvas cellView[][GAME_WIDTH]) {
-    int x;
-    int y;
+    int x, y;
 
     for (y = 0; y < GAME_HEIGHT; y++) {
         for (x = 0; x < GAME_WIDTH; x++) {
@@ -262,8 +258,7 @@ void canvasStamper(Canvas cellView[][GAME_WIDTH], Point snake[], Point fruit[], 
 }
 
 void canvasTextStamper(const char *text, Canvas cellView[][GAME_WIDTH], int x, int y, int startR, int startG, int startB, int endR, int endG, int endB) {
-    int len = strlen(text);
-    int i = 0;
+    int len = strlen(text), i = 0;
 
     for (i = 0; i < len; i++) {
         int r = startR + (endR - startR) * i / (len - 1);
