@@ -29,7 +29,7 @@ int charInputHandler(Point prevDirInput[]);
 int snakeDirectionHandler(Point snake[], Point lastDir[]);
 void printGradient(const char *text, int startR, int startG, int startB, int endR, int endG, int endB);
 void disable_raw_mode();
-void spawnFruit(Point fruit[], int spawnWidth, int spawnHeight, int fruitNumber);
+void spawnFruit(Point fruit[], Point snake[], int snakeLength, int spawnWidth, int spawnHeight, int fruitNumber);
 void scoreDisplay(int currentPoints, int spacing);
 int mainMenu();
 int snakePlayer();
@@ -55,7 +55,7 @@ int main(void) {
         case 67:
             enable_raw_mode();
             for (i = 0; i < fruitAmount; i++) {
-                spawnFruit(fruit, GAME_WIDTH - 41, GAME_HEIGHT - 1, i);
+                spawnFruit(fruit, snake, snakeLength, GAME_WIDTH - 41, GAME_HEIGHT - 1, i);
             }
             while (1) {
                 printf("\033[H");
@@ -66,11 +66,9 @@ int main(void) {
                         snakeLength++;
                         if (((snakeLength - 2) % 10) == 0) {
                             fruitAmount++;
-                            spawnFruit(fruit, GAME_WIDTH -41, GAME_HEIGHT - 1, fruitAmount-1);
+                            spawnFruit(fruit, snake, snakeLength, GAME_WIDTH -41, GAME_HEIGHT - 1, fruitAmount-1);
                         }
-                        spawnFruit(fruit, GAME_WIDTH - 41, GAME_HEIGHT - 1, i);
-                        if (collsionCheck(snake, fruit, snakeLength, fruitAmount, 1, 0))
-                            spawnFruit(fruit, GAME_WIDTH - 41, GAME_HEIGHT - 1, i);
+                        spawnFruit(fruit, snake, snakeLength, GAME_WIDTH - 41, GAME_HEIGHT - 1, i);
                     }
                 }
 
@@ -197,9 +195,11 @@ void disable_raw_mode() {
     tcsetattr(STDIN_FILENO, TCSANOW, &original_term);
 }
 
-void spawnFruit(Point fruit[], int spawnWidth, int spawnHeight, int fruitNumber) {
-    fruit[fruitNumber].posX = (rand() % (spawnWidth - 2)) + 1;
-    fruit[fruitNumber].posY = (rand() % (spawnHeight - 2)) + 1;
+void spawnFruit(Point fruit[], Point snake[], int snakeLength, int spawnWidth, int spawnHeight, int fruitNumber) {
+    do {
+        fruit[fruitNumber].posX = (rand() % (spawnWidth - 2)) + 1;
+        fruit[fruitNumber].posY = (rand() % (spawnHeight - 2)) + 1;
+    } while (collsionCheck(snake, fruit, snakeLength, fruitNumber, 0, 0));
 }
 
 void canvasScoreStamper(Canvas cellView[][GAME_WIDTH], int x, int y, int currentPoints) {
