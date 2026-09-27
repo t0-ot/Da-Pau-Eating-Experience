@@ -25,15 +25,16 @@ typedef struct {
 int collsionCheck(Point object1[], Point object2[], int objCountAmt1, int objCountAmt2, int incrementBoth, int countFrom);
 int hiScoreCounter(int currentScore, int *highestScore);
 void enable_raw_mode();
-int charInputHandler(Point prevDirInput[]);
+int movementInputHandler(Point prevDirInput[]);
 int snakeDirectionHandler(Point snake[], Point lastDir[]);
 void printGradient(const char *text, int startR, int startG, int startB, int endR, int endG, int endB);
 void disable_raw_mode();
 void spawnFruit(Point fruit[], Point snake[], int snakeLength, int spawnWidth, int spawnHeight, int fruitNumber);
 void scoreDisplay(int currentPoints, int spacing);
 int mainMenu();
+int menuInputHandler(int *menuChoice, int optionAmount);
 int snakePlayer();
-void canvasIntializer(Canvas cellView[][GAME_WIDTH]);
+void canvasIntializer(Canvas cellView[][GAME_WIDTH], int dividerPos);
 void canvasViewPrint(Canvas cellView[][GAME_WIDTH]);
 void canvasStamper(Canvas cellView[][GAME_WIDTH], Point snake[], Point fruit[], int snakeLength, int fruitAmount);
 void cellColorAssignment(Canvas cellView[][GAME_WIDTH], int x, int y, char ch, int r, int g, int b);
@@ -49,10 +50,9 @@ int main(void) {
     Point lastDirInput[1] = {{0, 0}};
     int snakeLength = 2, fruitAmount = 1, i = 0;
     switch (mainMenu()) {
-        case 2:
-            printf("Thanks for launching me\n");
+        case 1:
             return 0;
-        case 67:
+        case 0:
             enable_raw_mode();
             for (i = 0; i < fruitAmount; i++) {
                 spawnFruit(fruit, snake, snakeLength, GAME_WIDTH - 41, GAME_HEIGHT - 1, i);
@@ -60,7 +60,7 @@ int main(void) {
             while (1) {
                 printf("\033[H");
 
-                charInputHandler(lastDirInput);
+                int moveBlocked = movementInputHandler(lastDirInput);
                 for (i = 0; i < fruitAmount; i++) {
                     if (snake[0].posX == fruit[i].posX && snake[0].posY == fruit[i].posY) {
                         snakeLength++;
@@ -76,7 +76,7 @@ int main(void) {
                     snake[i] = snake[i - 1];
                 }
 
-                if (!(snakeDirectionHandler(snake, lastDirInput)) || (collsionCheck(snake, snake, snakeLength, 0, 0, 1) && !(charInputHandler(lastDirInput)))) {
+                if (!(snakeDirectionHandler(snake, lastDirInput)) || (collsionCheck(snake, snake, snakeLength, 0, 0, 1) && !moveBlocked)) {
                     snake[0].posX = 20;
                     snake[0].posY = 10;
                     lastDirInput[0].posY = 0;
@@ -85,7 +85,7 @@ int main(void) {
                     fruitAmount = 1;
                 }
 
-                canvasIntializer(cell);
+                canvasIntializer(cell, GAME_WIDTH - 41);
                 canvasStamper(cell, snake, fruit, snakeLength, fruitAmount);
                 canvasTextStamper("Da Pau Eating Experience", cell, 48, 3, 255, 105, 180, 255, 215, 0);
                 canvasTextStamper("-== SCORE ==-", cell, 53, 9, 255, 215, 0, 255, 215, 0);
@@ -108,15 +108,70 @@ int main(void) {
     }
     return 0;
 }
+float ease(float time, float startValue, float change, float duration) {
+     time /= duration / 2;
+     if (time < 1)  {
+          return change / 2 * time * time + startValue;
+     }
+
+     time--;
+     return -change / 2 * (time * (time - 2) - 1) + startValue;
+ };
 
 int mainMenu() {
-    int menuChoice;
-    printf("=== Da Pau Eating Experience ===\n");
-    printf("67. Play Snake\n");
-    printf("2. Quit\n");
-    printf("What would you like to do?: ");
-    scanf("%d", &menuChoice);
-    return menuChoice;
+    Canvas menuCell[GAME_HEIGHT][GAME_WIDTH];
+    float time = 0.0f;
+    float duration = 1.0f;
+    float startPos = 0.0f;
+    float targetPos = 40.0f;
+    float change = targetPos - startPos;
+
+    int isStart = 0;
+    int menuChoice = 0;
+    int input = 0;
+    enable_raw_mode();
+    while (1) {
+        printf("\033[H");
+
+        canvasIntializer(menuCell, startPos);
+        if (menuInputHandler(&menuChoice, 2))
+            break;
+        switch (menuChoice) {
+            case 0:
+                canvasTextStamper("-->", menuCell, GAME_WIDTH / 2 - 11, 10, 255, 255, 255, 255, 255, 255);
+                canvasTextStamper("PLAY!", menuCell, GAME_WIDTH / 2 - 3, 10, 255, 255, 255, 255, 255, 255);
+                canvasTextStamper("QUIT GAME", menuCell, GAME_WIDTH / 2 - 5, 12, 0, 255, 0, 0, 255, 0);
+                break;
+            case 1:
+                canvasTextStamper("-->", menuCell, GAME_WIDTH / 2 - 11, 12, 255, 255, 255, 255, 255, 255);
+                canvasTextStamper("PLAY!", menuCell, GAME_WIDTH / 2 - 3, 10, 0, 255, 0, 0, 255, 0);
+                canvasTextStamper("QUIT GAME", menuCell, GAME_WIDTH / 2 - 5, 12, 255, 255, 255, 255, 255, 255);
+                break;
+        }
+        canvasTextStamper("Da Pau Eating Experience", menuCell, GAME_WIDTH / 2 - 12, 3, 255, 105, 180, 255, 215, 0);
+        canvasViewPrint(menuCell);
+        fflush(stdout);
+        usleep(30000);
+    }
+
+    if (menuChoice == 1)
+        return 1;
+
+    while (time <= duration) {
+        printf("\033[H");
+
+        int currentPos = (int)ease(time, startPos, change, duration);
+
+        canvasIntializer(menuCell, currentPos);
+        canvasTextStamper("Da Pau Eating Experience", menuCell, (int)ease(time, (GAME_WIDTH / 2 - 12), 21, duration), 3, 255, 105, 180, 255, 215, 0);
+        canvasViewPrint(menuCell);
+
+        fflush(stdout);
+        usleep(30000);
+        time += 0.03f;
+    }
+    disable_raw_mode();
+    return 0;
 }
 
 int collsionCheck(Point object1[], Point object2[], int objCountAmt1, int objCountAmt2, int incrementBoth, int countFrom) {
@@ -156,7 +211,30 @@ void enable_raw_mode() {
     tcsetattr(STDIN_FILENO, TCSANOW, &raw);
 }
 
-int charInputHandler(Point prevDirInput[]) {
+int menuInputHandler(int *menuChoice, int optionAmount) {
+    char latest_ch = 0, temp_ch;
+    while (read(STDIN_FILENO, &temp_ch, 1) > 0) {
+        latest_ch = temp_ch;
+    }
+
+    if (latest_ch == 0) return 0;
+
+    switch (latest_ch) {
+        case 'w':
+            if (*menuChoice - 1 >= 0)
+                (*menuChoice)--;
+            break;
+        case 's':
+            if (*menuChoice + 1 < optionAmount)
+                (*menuChoice)++;
+            break;
+        case '\n':
+            return 1;
+    }
+    return 0;
+}
+
+int movementInputHandler(Point prevDirInput[]) {
     char latest_ch = 0, temp_ch;
     int dx = 0, dy = 0;
 
@@ -227,16 +305,16 @@ void cellColorAssignment(Canvas cellView[][GAME_WIDTH], int x, int y, char ch, i
     cellView[y][x].b = b;
 }
 
-void canvasIntializer(Canvas cellView[][GAME_WIDTH]) {
+void canvasIntializer(Canvas cellView[][GAME_WIDTH], int dividerPos) {
     int x, y;
 
     for (y = 0; y < GAME_HEIGHT; y++) {
         for (x = 0; x < GAME_WIDTH; x++) {
-            if (x == 0 || x == GAME_WIDTH - 41 || y == 0 || y == GAME_HEIGHT - 1 || x == GAME_WIDTH - 1) {
+            if (x == 0 || x == dividerPos || y == 0 || y == GAME_HEIGHT - 1 || x == GAME_WIDTH - 1) {
                 cellColorAssignment(cellView, x, y, '#', 255, 105, 180);
-            } else if (x < GAME_WIDTH - 41) {
+            } else if (x < dividerPos) {
                 cellColorAssignment(cellView, x, y, '.', 255, 182, 193);
-            } else if (x >= GAME_WIDTH - 41) {
+            } else {
                 cellColorAssignment(cellView, x, y, ' ', 255, 255, 255);
             }
         }
