@@ -27,13 +27,11 @@ int hiScoreCounter(int currentScore, int *highestScore);
 void enable_raw_mode();
 int movementInputHandler(Point prevDirInput[]);
 int snakeDirectionHandler(Point snake[], Point lastDir[]);
-void printGradient(const char *text, int startR, int startG, int startB, int endR, int endG, int endB);
 void disable_raw_mode();
 void spawnFruit(Point fruit[], Point snake[], int snakeLength, int spawnWidth, int spawnHeight, int fruitNumber);
 void scoreDisplay(int currentPoints, int spacing);
 int mainMenu();
 int menuInputHandler(int *menuChoice, int optionAmount);
-int snakePlayer();
 void canvasIntializer(Canvas cellView[][GAME_WIDTH], int dividerPos);
 void canvasViewPrint(Canvas cellView[][GAME_WIDTH]);
 void canvasStamper(Canvas cellView[][GAME_WIDTH], Point snake[], Point fruit[], int snakeLength, int fruitAmount);
@@ -99,12 +97,7 @@ int main(void) {
                 usleep(100000);
             }
             disable_raw_mode();
-
             break;
-        default:
-            printf("Bad input! Please Enter a valid number");
-            return 0;
-
     }
     return 0;
 }
@@ -292,10 +285,6 @@ void canvasScoreStamper(Canvas cellView[][GAME_WIDTH], int x, int y, int current
     cellColorAssignment(cellView, x,     y, hundreds + '0', 255, 215, 0);
     cellColorAssignment(cellView, x + 1, y, tens     + '0', 255, 215, 0);
     cellColorAssignment(cellView, x + 2, y, units    + '0', 255, 215, 0);
-}
-
-int snakePlayer() {
-
 }
 
 void cellColorAssignment(Canvas cellView[][GAME_WIDTH], int x, int y, char ch, int r, int g, int b) {
