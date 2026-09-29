@@ -1,0 +1,9 @@
+# depslib dependency file v1.0
+1790682566 source:/home/t0-ot/Documents/GitHub/Da-Pau-Eating-Experience/main.c
+	<stdio.h>
+	<stdlib.h>
+	<termios.h>
+	<unistd.h>
+	<time.h>
+	<string.h>
+

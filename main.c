@@ -119,9 +119,7 @@ int mainMenu() {
     float targetPos = 40.0f;
     float change = targetPos - startPos;
 
-    int isStart = 0;
     int menuChoice = 0;
-    int input = 0;
     enable_raw_mode();
     while (1) {
         printf("\033[H");
