@@ -30,8 +30,9 @@
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
+			<Add directory="include" />
 		</Compiler>
-		<Unit filename="main.c">
+		<Unit filename="src/snake/main.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Extensions>

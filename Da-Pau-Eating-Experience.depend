@@ -1,5 +1,13 @@
 # depslib dependency file v1.0
-1790682566 source:/home/t0-ot/Documents/GitHub/Da-Pau-Eating-Experience/main.c
+1790780839 source:/home/t0-ot/Documents/GitHub/Da-Pau-Eating-Experience/main.c
+	<stdio.h>
+	<stdlib.h>
+	<termios.h>
+	<unistd.h>
+	<time.h>
+	<string.h>
+
+1791729485 source:/home/t0-ot/Documents/GitHub/Da-Pau-Eating-Experience/src/snake/main.c
 	<stdio.h>
 	<stdlib.h>
 	<termios.h>
