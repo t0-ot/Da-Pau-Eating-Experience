@@ -68,6 +68,12 @@ typedef struct {
 } BaseText;
 
 typedef struct {
+    int score;
+    int x;
+    int y;
+} ScoreText;
+
+typedef struct {
     BaseText textData;
     int isSelected;
     int optionAmt;
@@ -101,7 +107,7 @@ void canvasViewPrint(Canvas cellView[][GAME_WIDTH]);
 void cellColorAssignment(Canvas cellView[][GAME_WIDTH], int x, int y, char ch, int r, int g, int b);
 void canvasTextStamperGradient(void *data, Canvas cellView[][GAME_WIDTH]);
 void canvasTextStamper(void *data, Canvas cellView[][GAME_WIDTH]);
-void canvasScoreStamper(Canvas cellView[][GAME_WIDTH], int x, int y, int currentPoints);
+void canvasScoreStamper(void *data, Canvas cellView[][GAME_WIDTH]);
 
 int main(void) {
     srand(time(NULL));
@@ -117,6 +123,7 @@ int main(void) {
             {.r = 255, .g = 215, .b = 0}
         }
     };
+
     BaseText scoreTexts[2] = {
         [0].text = "-== SCORE ==-",
         [0].startX = 53,
@@ -130,10 +137,38 @@ int main(void) {
             [0].b = 0
         }
     };
+
+    RenderObj scoreTextObj = {
+        .data = &scoreTexts[0],
+        .stamp = canvasTextStamper
+    };
+    RenderObj hiScoreTextObj = {
+        .data = &scoreTexts[1],
+        .stamp = canvasTextStamper
+    };
+    RenderObj titleTextObj = {
+        .data = &titleText,
+        .stamp = canvasTextStamperGradient
+    };
     snakeData snake1 = {
         .segments[0] = (Point){20, 10},
         .length = 2,
         .alive = 1
+    };
+
+    ScoreText scoreNumbers[2] = {
+        [0 ... 1].score = 0,
+        [0].y = 8,
+        [1].y = 12,
+        [0 ... 1].x = 58
+    };
+    RenderObj scoreNumObj = {
+        .data = &scoreNumbers[0],
+        .stamp = canvasScoreStamper
+    };
+    RenderObj hiScoreNumObj = {
+        .data = &scoreNumbers[1],
+        .stamp = canvasScoreStamper
     };
     ViewPointList snakeView = { .points = snake1.segments, .amt = &snake1.length};
     RenderObj snakeObj1 = {
@@ -188,15 +223,23 @@ int main(void) {
                     snake1.alive = 1;
                     normalFruitSet.quantity = 1;
                 }
+                scoreNumbers[0].score = snake1.length;
+                scoreNumbers[1].score = hiScoreCounter(snake1.length, &currentHiScore);
 
                 canvasIntializer(cell, GAME_WIDTH - 41);
-                normFruitSetObj.stamp(normFruitSetObj.data, cell);
-                snakeObj1.stamp(snakeObj1.data, cell);
-                canvasTextStamperGradient(&titleText, cell);
-                canvasTextStamper(&scoreTexts[0], cell);
-                canvasTextStamper(&scoreTexts[1], cell);
-                canvasScoreStamper(cell, 58, 8, snake1.length);
-                canvasScoreStamper(cell, 58, 12, hiScoreCounter(snake1.length, &currentHiScore));
+                RenderObj* screenRenderList[] = {
+                    &normFruitSetObj,
+                    &snakeObj1,
+                    &scoreTextObj,
+                    &hiScoreTextObj,
+                    &titleTextObj,
+                    &scoreNumObj,
+                    &hiScoreNumObj
+                };
+                int totalRenderList = sizeof(screenRenderList) / sizeof(screenRenderList[0]);
+
+                for (int i = 0; i < totalRenderList; i++)
+                    screenRenderList[i]->stamp(screenRenderList[i]->data, cell);
                 canvasViewPrint(cell);
                 printf("W - UP, S - DOWN, A - LEFT, D - RIGHT\n");
 
@@ -406,8 +449,9 @@ void baseEat(void *fruit, snakeData *snake) {
     snake->length++;
 }
 
-void canvasScoreStamper(Canvas cellView[][GAME_WIDTH], int x, int y, int currentPoints) {
-    int score = currentPoints - 2;
+void canvasScoreStamper(void *data, Canvas cellView[][GAME_WIDTH]) {
+    ScoreText *scoreDat = (ScoreText *)data;
+    int score = scoreDat->score - 2;
     if (score < 0)
         score = 0;
 
@@ -415,9 +459,9 @@ void canvasScoreStamper(Canvas cellView[][GAME_WIDTH], int x, int y, int current
     int tens     = (score / 10) % 10;
     int units    = score % 10;
 
-    cellColorAssignment(cellView, x,     y, hundreds + '0', 255, 215, 0);
-    cellColorAssignment(cellView, x + 1, y, tens     + '0', 255, 215, 0);
-    cellColorAssignment(cellView, x + 2, y, units    + '0', 255, 215, 0);
+    cellColorAssignment(cellView, scoreDat->x,     scoreDat->y, hundreds + '0', 255, 215, 0);
+    cellColorAssignment(cellView, scoreDat->x + 1, scoreDat->y, tens     + '0', 255, 215, 0);
+    cellColorAssignment(cellView, scoreDat->x + 2, scoreDat->y, units    + '0', 255, 215, 0);
 }
 
 void cellColorAssignment(Canvas cellView[][GAME_WIDTH], int x, int y, char ch, int r, int g, int b) {
