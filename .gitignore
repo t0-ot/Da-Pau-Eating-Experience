@@ -2,3 +2,5 @@
 *.o
 SNAKE
 bin/Debug/Da-Pau-Eating-Experience
+/bin
+ValgrindOut.xml

@@ -7,11 +7,13 @@
 	<time.h>
 	<string.h>
 
-1792248728 source:/home/t0-ot/Documents/GitHub/Da-Pau-Eating-Experience/src/snake/main.c
+1792512480 source:/home/t0-ot/Documents/GitHub/Da-Pau-Eating-Experience/src/snake/main.c
 	<stdio.h>
 	<stdlib.h>
 	<termios.h>
 	<unistd.h>
 	<time.h>
 	<string.h>
+	<stdint.h>
+	<stdbool.h>
 

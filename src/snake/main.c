@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <time.h>
 #include <string.h>
+#include <stdint.h>
+#include <stdbool.h>
 
 #define GAME_NAME "Da Pau Eating Experience"
 #define MAX_STATES 2
@@ -14,7 +16,7 @@
 struct termios original_term;
 
 typedef struct {
-    int r, g, b;
+    uint8_t r, g, b;
 } RGB;
 
 typedef struct {
@@ -43,19 +45,17 @@ typedef struct {
 
 typedef struct {
     Point *points;
-    int *amt;
+    int amt;
 } ViewPointList;
 
 typedef struct {
-    Point segments[800];
-    int length;
-    int alive;
+    ViewPointList pointList;
+    bool alive;
 } snakeData;
 
 typedef struct {
-    Point position[100];
+    ViewPointList pointList;
     Canvas visuals;
-    int quantity;
     void *fruitType;
     void (*onEat)(void *fruit, snakeData snake);
 } fruitData;
@@ -75,7 +75,7 @@ typedef struct {
 
 typedef struct {
     BaseText textData;
-    int isSelected;
+    bool isSelected;
     int optionAmt;
 } OptionText;
 
@@ -86,8 +86,8 @@ typedef struct {
     StampFunc stamp;
 } RenderObj;
 
-int collisionCheckBoth(ViewPointList objView1, ViewPointList objView2, int countFrom);
-int collisionCheckOne(ViewPointList objView1, ViewPointList objView2, int countFrom, int checkIndexObj2);
+int objectPointResize(ViewPointList *data);
+int collisionCheckOne(ViewPointList *objView1, ViewPointList *objView2, int countFrom, int checkIndexObj2);
 int hiScoreCounter(int currentScore, int *highestScore);
 void enable_raw_mode();
 int movementInputHandler(Point prevDirInput[]);
@@ -104,7 +104,7 @@ void snakeStamper(void *data, Canvas cellview[][GAME_WIDTH]);
 void fruitStamper(void *data, Canvas cellview[][GAME_WIDTH]);
 void optionChoiceStamper(void *data, Canvas cellView[][GAME_WIDTH]);
 void canvasViewPrint(Canvas cellView[][GAME_WIDTH]);
-void cellColorAssignment(Canvas cellView[][GAME_WIDTH], int x, int y, char ch, int r, int g, int b);
+void cellColorAssignment(Canvas cellView[][GAME_WIDTH], int x, int y, char ch, uint8_t r, uint8_t g, uint8_t b);
 void canvasTextStamperGradient(void *data, Canvas cellView[][GAME_WIDTH]);
 void canvasTextStamper(void *data, Canvas cellView[][GAME_WIDTH]);
 void canvasScoreStamper(void *data, Canvas cellView[][GAME_WIDTH]);
@@ -151,11 +151,12 @@ int main(void) {
         .stamp = canvasTextStamperGradient
     };
     snakeData snake1 = {
-        .segments[0] = (Point){20, 10},
-        .length = 2,
+        .pointList.amt = 2,
         .alive = 1
     };
-
+    snake1.pointList.points = malloc(snake1.pointList.amt * sizeof(Point));
+    snake1.pointList.points->posX = 20;
+    snake1.pointList.points->posY = 10;
     ScoreText scoreNumbers[2] = {
         [0 ... 1].score = 0,
         [0].y = 8,
@@ -170,7 +171,6 @@ int main(void) {
         .data = &scoreNumbers[1],
         .stamp = canvasScoreStamper
     };
-    ViewPointList snakeView = { .points = snake1.segments, .amt = &snake1.length};
     RenderObj snakeObj1 = {
         .data = &snake1,
         .stamp = snakeStamper
@@ -179,64 +179,67 @@ int main(void) {
     defaultFruit baseFruit = { .scoreAmt = 1};
     fruitData normalFruitSet = {
         .fruitType = &baseFruit,
-        .quantity = 1,
+        .pointList.amt = 1,
         .visuals = { .sym = 'P', .color.r =  0, .color.g = 255, .color.b = 0}
     };
-    ViewPointList normalFruitView = { .points = normalFruitSet.position, .amt = &normalFruitSet.quantity};
+    normalFruitSet.pointList.points = malloc(normalFruitSet.pointList.amt * sizeof(Point));
     RenderObj normFruitSetObj = {
         .data = &normalFruitSet,
         .stamp = fruitStamper
     };
+    RenderObj* screenRenderList[] = {
+        &normFruitSetObj,
+        &snakeObj1,
+        &scoreTextObj,
+        &hiScoreTextObj,
+        &titleTextObj,
+        &scoreNumObj,
+        &hiScoreNumObj
+    };
+    int totalRenderList = sizeof(screenRenderList) / sizeof(screenRenderList[0]);
     Point lastDirInput[1] = {{0, 0}};
     switch (mainMenu(&titleText)) {
         case 1:
             return 0;
         case 0:
             enable_raw_mode();
-            for (int i = 0; i < normalFruitSet.quantity; i++) {
-                spawnFruit(normalFruitView, i, snakeView, GAME_WIDTH - 41, GAME_HEIGHT - 1);
+            for (int i = 0; i < normalFruitSet.pointList.amt; i++) {
+                spawnFruit(normalFruitSet.pointList, i, snake1.pointList, GAME_WIDTH - 41, GAME_HEIGHT - 1);
             }
             while (1) {
-                printf("\033[H");
-
                 int moveBlocked = movementInputHandler(lastDirInput);
-                int colllideWithFruit = collisionCheckOne(normalFruitView, snakeView, 0, 0);
+                int colllideWithFruit = collisionCheckOne(&normalFruitSet.pointList, &snake1.pointList, 0, 0);
                 if (colllideWithFruit > 0) {
-                    snake1.length++;
-                    if (((snake1.length - 2) % 10) == 0) {
-                        normalFruitSet.quantity++;
-                        spawnFruit(normalFruitView, normalFruitSet.quantity-1, snakeView, HALF_GAMEVIEW_BOUNDARY, GAME_HEIGHT - 1);
+                    snake1.pointList.amt++;
+                    objectPointResize(&snake1.pointList);
+                    if (((snake1.pointList.amt - 2) % 10) == 0) {
+                        normalFruitSet.pointList.amt++;
+                        objectPointResize(&normalFruitSet.pointList);
+                        spawnFruit(normalFruitSet.pointList, normalFruitSet.pointList.amt-1, snake1.pointList, HALF_GAMEVIEW_BOUNDARY, GAME_HEIGHT - 1);
                     }
-                    spawnFruit(normalFruitView, colllideWithFruit-1, snakeView, HALF_GAMEVIEW_BOUNDARY, GAME_HEIGHT - 1);
+                    spawnFruit(normalFruitSet.pointList, colllideWithFruit-1, snake1.pointList, HALF_GAMEVIEW_BOUNDARY, GAME_HEIGHT - 1);
                 }
 
                 shiftSnakeSegments(&snake1);
-                snakeDirectionHandler(snake1.segments, lastDirInput);
-                snake1.alive = checkLife(snakeView, GAME_WIDTH - 1, HALF_GAMEVIEW_BOUNDARY);
+                snakeDirectionHandler(snake1.pointList.points, lastDirInput);
+                snake1.alive = checkLife(snake1.pointList, GAME_WIDTH - 1, HALF_GAMEVIEW_BOUNDARY);
 
                 if (!(snake1.alive) && !moveBlocked) {
-                    snake1.segments[0].posX = 20;
-                    snake1.segments[0].posY = 10;
+                    snake1.pointList.points[0].posX = 20;
+                    snake1.pointList.points[0].posY = 10;
                     lastDirInput[0].posY = 0;
                     lastDirInput[0].posX = 0;
-                    snake1.length = 2;
+                    snake1.pointList.amt = 2;
                     snake1.alive = 1;
-                    normalFruitSet.quantity = 1;
+                    normalFruitSet.pointList.amt = 1;
+                    objectPointResize(&snake1.pointList);
+                    objectPointResize(&normalFruitSet.pointList);
                 }
-                scoreNumbers[0].score = snake1.length;
-                scoreNumbers[1].score = hiScoreCounter(snake1.length, &currentHiScore);
+                scoreNumbers[0].score = snake1.pointList.amt;
+                scoreNumbers[1].score = hiScoreCounter(snake1.pointList.amt, &currentHiScore);
 
+                printf("\033[H");
                 canvasIntializer(cell, GAME_WIDTH - 41);
-                RenderObj* screenRenderList[] = {
-                    &normFruitSetObj,
-                    &snakeObj1,
-                    &scoreTextObj,
-                    &hiScoreTextObj,
-                    &titleTextObj,
-                    &scoreNumObj,
-                    &hiScoreNumObj
-                };
-                int totalRenderList = sizeof(screenRenderList) / sizeof(screenRenderList[0]);
 
                 for (int i = 0; i < totalRenderList; i++)
                     screenRenderList[i]->stamp(screenRenderList[i]->data, cell);
@@ -246,6 +249,8 @@ int main(void) {
                 fflush(stdout);
                 usleep(100000);
             }
+            free(snake1.pointList.points);
+            free(normalFruitSet.pointList.points);
             disable_raw_mode();
             break;
     }
@@ -321,19 +326,27 @@ int mainMenu(BaseText *gameTitle) {
     return 0;
 }
 
-int collisionCheckBoth(ViewPointList objView1, ViewPointList objView2, int countFrom) {
-    for (int i = countFrom; i < *objView1.amt; i++) {
-        for (int k = 0; k < *objView2.amt; k++) {
-            if (objView1.points[i].posX == objView2.points[k].posX && objView1.points[i].posY == objView2.points[k].posY)
-                return 1;
-        }
+int objectPointResize(ViewPointList *data) {
+    if (data->amt <= 0) {
+        free(data->points);
+        data->points = NULL;
+        return 1;
     }
-    return 0;
+
+    Point *temp = realloc(data->points, data->amt * sizeof(Point));
+    if (temp == NULL) {
+        fprintf(stderr, "Fatal Error: Out of memory during resize!\n");
+        exit(EXIT_FAILURE);
+    }
+    data->points = temp;
+    return 1;
 }
 
-int collisionCheckOne(ViewPointList objView1, ViewPointList objView2, int countFrom, int checkIndexObj2) {
-    for (int i = countFrom; i < *objView1.amt; i++) {
-        if (objView1.points[i].posX == objView2.points[checkIndexObj2].posX && objView1.points[i].posY == objView2.points[checkIndexObj2].posY)
+int collisionCheckOne(ViewPointList *objView1, ViewPointList *objView2, int countFrom, int checkIndexObj2) {
+    for (int i = countFrom; i < objView1->amt; i++) {
+        if (objView1 == objView2 && i == checkIndexObj2)
+            continue;
+        if (objView1->points[i].posX == objView2->points[checkIndexObj2].posX && objView1->points[i].posY == objView2->points[checkIndexObj2].posY)
             return i+1;
     }
     return 0;
@@ -388,7 +401,7 @@ int menuInputHandler(int *menuChoice, int optionAmount) {
 }
 
 int movementInputHandler(Point prevDirInput[]) {
-    int dx = 0, dy = 0;
+    int8_t dx = 0, dy = 0;
     char input = inputHandler();
 
     if (input == '\0') return 0;
@@ -419,15 +432,15 @@ int snakeDirectionHandler(Point snake[], Point lastDir[]) {
 }
 
 void shiftSnakeSegments(snakeData *snakeInfo) {
-    for (int i = snakeInfo->length - 1; i > 0; i--) {
-        snakeInfo->segments[i] = snakeInfo->segments[i-1];
+    for (int i = snakeInfo->pointList.amt- 1; i > 0; i--) {
+        snakeInfo->pointList.points[i] = snakeInfo->pointList.points[i-1];
     }
 }
 
 int checkLife(ViewPointList snakeView, int playWidthBoundary, int playHeightBoundary) {
     if (snakeView.points[0].posX == 0 || snakeView.points[0].posY == 0 || snakeView.points[0].posX == playWidthBoundary || snakeView.points[0].posY == playHeightBoundary)
         return 0;
-    if (collisionCheckOne(snakeView, snakeView, 1, 0))
+    if (collisionCheckOne(&snakeView, &snakeView, 1, 0))
         return 0;
     return 1;
 }
@@ -440,13 +453,13 @@ void spawnFruit(ViewPointList fruitView, int fruitNumber, ViewPointList snakeVie
     do {
         fruitView.points[fruitNumber].posX = (rand() % (spawnWidth - 2)) + 1;
         fruitView.points[fruitNumber].posY = (rand() % (spawnHeight - 2)) + 1;
-    } while (collisionCheckOne(snakeView, fruitView, 0, fruitNumber));
+    } while (collisionCheckOne(&snakeView, &fruitView, 0, fruitNumber) );
 }
 
 void baseEat(void *fruit, snakeData *snake) {
     fruitData *fruitInfo = (fruitData *)fruit;
     defaultFruit *baseFruit = (defaultFruit *)fruitInfo->fruitType;
-    snake->length++;
+    snake->pointList.amt++;
 }
 
 void canvasScoreStamper(void *data, Canvas cellView[][GAME_WIDTH]) {
@@ -464,7 +477,7 @@ void canvasScoreStamper(void *data, Canvas cellView[][GAME_WIDTH]) {
     cellColorAssignment(cellView, scoreDat->x + 2, scoreDat->y, units    + '0', 255, 215, 0);
 }
 
-void cellColorAssignment(Canvas cellView[][GAME_WIDTH], int x, int y, char ch, int r, int g, int b) {
+void cellColorAssignment(Canvas cellView[][GAME_WIDTH], int x, int y, char ch, uint8_t r, uint8_t g, uint8_t b) {
     cellView[y][x].sym = ch;
     cellView[y][x].color.r = r;
     cellView[y][x].color.g = g;
@@ -474,7 +487,7 @@ void cellColorAssignment(Canvas cellView[][GAME_WIDTH], int x, int y, char ch, i
 void canvasIntializer(Canvas cellView[][GAME_WIDTH], int dividerPos) {
     int x, y;
 
-    for (y = 0; y < GAME_HEIGHT; y++) {
+    for (y = 0; y < GAME_HEIGHT; y++)
         for (x = 0; x < GAME_WIDTH; x++) {
             if (x == 0 || x == dividerPos || y == 0 || y == GAME_HEIGHT - 1 || x == GAME_WIDTH - 1) {
                 cellColorAssignment(cellView, x, y, '#', 255, 105, 180);
@@ -484,29 +497,28 @@ void canvasIntializer(Canvas cellView[][GAME_WIDTH], int dividerPos) {
                 cellColorAssignment(cellView, x, y, ' ', 255, 255, 255);
             }
         }
-    }
 }
 
 void snakeStamper(void *data, Canvas cellview[][GAME_WIDTH]) {
     snakeData *p = (snakeData *)data;
-    for (int i = p->length - 1; i >= 0; i--) {
-        cellview[p->segments[i].posY][p->segments[i].posX].color.r = 0;
-        cellview[p->segments[i].posY][p->segments[i].posX].color.g = 255;
-        cellview[p->segments[i].posY][p->segments[i].posX].color.b = 0;
+    for (int i = p->pointList.amt - 1; i >= 0; i--) {
+        cellview[p->pointList.points[i].posY][p->pointList.points[i].posX].color.r = 0;
+        cellview[p->pointList.points[i].posY][p->pointList.points[i].posX].color.g = 255;
+        cellview[p->pointList.points[i].posY][p->pointList.points[i].posX].color.b = 0;
         if (i == 0)
-            cellview[p->segments[i].posY][p->segments[i].posX].sym = 'M';
+            cellview[p->pointList.points[i].posY][p->pointList.points[i].posX].sym = 'M';
         else
-            cellview[p->segments[i].posY][p->segments[i].posX].sym = 'O';
+            cellview[p->pointList.points[i].posY][p->pointList.points[i].posX].sym = 'O';
     }
 }
 
 void fruitStamper(void *data, Canvas cellview[][GAME_WIDTH]) {
     fruitData *p = (fruitData *)data;
-    for (int i = 0; i < p->quantity; i++) {
-        cellview[p->position[i].posY][p->position[i].posX].sym = p->visuals.sym;
-        cellview[p->position[i].posY][p->position[i].posX].color.r = p->visuals.color.r;
-        cellview[p->position[i].posY][p->position[i].posX].color.g = p->visuals.color.g;
-        cellview[p->position[i].posY][p->position[i].posX].color.b = p->visuals.color.b;
+    for (int i = 0; i < p->pointList.amt; i++) {
+        cellview[p->pointList.points[i].posY][p->pointList.points[i].posX].sym = p->visuals.sym;
+        cellview[p->pointList.points[i].posY][p->pointList.points[i].posX].color.r = p->visuals.color.r;
+        cellview[p->pointList.points[i].posY][p->pointList.points[i].posX].color.g = p->visuals.color.g;
+        cellview[p->pointList.points[i].posY][p->pointList.points[i].posX].color.b = p->visuals.color.b;
     }
 
 }

@@ -30,8 +30,12 @@
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
+			<Add option="-g -fsanitize=address" />
 			<Add directory="include" />
 		</Compiler>
+		<Linker>
+			<Add option="-fsanitize=address" />
+		</Linker>
 		<Unit filename="src/snake/main.c">
 			<Option compilerVar="CC" />
 		</Unit>
