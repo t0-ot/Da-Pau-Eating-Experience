@@ -20,8 +20,8 @@ typedef struct {
 } RGB;
 
 typedef struct {
-    int posX;
-    int posY;
+    int8_t posX;
+    int8_t posY;
 } Point;
 
 typedef struct {
@@ -30,22 +30,22 @@ typedef struct {
 } Canvas;
 
 typedef struct {
-    int scoreAmt;
+    int8_t scoreAmt;
 } defaultFruit;
 
 typedef struct {
-    int points;
-    int thickness;
+    int8_t points;
+    int8_t thickness;
 } fatFruit;
 
 typedef struct {
-    int points;
-    int *speed;
+    int8_t *speed;
+    int8_t points;
 } speedFruit;
 
 typedef struct {
     Point *points;
-    int amt;
+    int16_t amt;
 } ViewPointList;
 
 typedef struct {
@@ -54,29 +54,29 @@ typedef struct {
 } snakeData;
 
 typedef struct {
+    void *fruitType;
+    void (*onEat)(void *fruit, snakeData *snake);
     ViewPointList pointList;
     Canvas visuals;
-    void *fruitType;
-    void (*onEat)(void *fruit, snakeData snake);
 } fruitData;
 
 typedef struct {
     char *text;
-    int startX;
-    int startY;
+    int8_t startX;
+    int8_t startY;
     RGB color[MAX_STATES];
 } BaseText;
 
 typedef struct {
-    int score;
-    int x;
-    int y;
+    int16_t score;
+    int8_t x;
+    int8_t y;
 } ScoreText;
 
 typedef struct {
     BaseText textData;
     bool isSelected;
-    int optionAmt;
+    int8_t optionAmt;
 } OptionText;
 
 typedef void(*StampFunc)(void *data, Canvas cellView[][GAME_WIDTH]);
