@@ -198,6 +198,7 @@ int main(void) {
     };
     int totalRenderList = sizeof(screenRenderList) / sizeof(screenRenderList[0]);
     Point lastDirInput[1] = {{0, 0}};
+    printf("\033[?25l");
     switch (mainMenu(&titleText)) {
         case 1:
             return 0;
@@ -254,6 +255,7 @@ int main(void) {
             disable_raw_mode();
             break;
     }
+    printf("\033[?25h");
     return 0;
 }
 float ease(float time, float startValue, float change, float duration) {
@@ -571,12 +573,14 @@ void canvasTextStamper(void *data, Canvas cellView[][GAME_WIDTH]) {
 }
 
 void canvasViewPrint(Canvas cellView[][GAME_WIDTH]) {
-    int x, y;
-
+    int x, y, bufferPos = 0, result;
+    char buffer[(GAME_WIDTH * 30) * GAME_HEIGHT];
     for (y = 0; y < GAME_HEIGHT; y++) {
         for (x = 0; x < GAME_WIDTH; x++) {
-            printf("\033[38;2;%d;%d;%dm%c\033[0m", cellView[y][x].color.r, cellView[y][x].color.g, cellView[y][x].color.b, cellView[y][x].sym);
+            bufferPos += sprintf(buffer + bufferPos, "\033[38;2;%d;%d;%dm%c\033[0m", cellView[y][x].color.r, cellView[y][x].color.g, cellView[y][x].color.b, cellView[y][x].sym);
         }
-        printf("\n");
+        sprintf(buffer + bufferPos, "\n");
+        bufferPos++;
     }
+    fwrite(buffer, sizeof(char), bufferPos, stdout);
 }
