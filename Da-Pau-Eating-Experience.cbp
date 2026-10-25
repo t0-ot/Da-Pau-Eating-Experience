@@ -36,6 +36,10 @@
 		<Linker>
 			<Add option="-fsanitize=address" />
 		</Linker>
+		<Unit filename="include/engine/canvas.h" />
+		<Unit filename="src/engine/canvas.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="src/snake/main.c">
 			<Option compilerVar="CC" />
 		</Unit>

@@ -17,3 +17,11 @@
 	<stdint.h>
 	<stdbool.h>
 
+1792913798 source:/home/t0-ot/Documents/GitHub/Da-Pau-Eating-Experience/src/engine/canvas.c
+	<stdio.h>
+	"../../include/engine/canvas.h"
+
+1792914287 /home/t0-ot/Documents/GitHub/Da-Pau-Eating-Experience/include/engine/canvas.h
+	<stdint.h>
+	<string.h>
+
