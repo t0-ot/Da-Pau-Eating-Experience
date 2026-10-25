@@ -573,12 +573,11 @@ void canvasTextStamper(void *data, Canvas cellView[][GAME_WIDTH]) {
 }
 
 void canvasViewPrint(Canvas cellView[][GAME_WIDTH]) {
-    int x, y, bufferPos = 0, result;
+    int bufferPos = 0;
     char buffer[(GAME_WIDTH * 30) * GAME_HEIGHT];
-    for (y = 0; y < GAME_HEIGHT; y++) {
-        for (x = 0; x < GAME_WIDTH; x++) {
+    for (int y = 0; y < GAME_HEIGHT; y++) {
+        for (int x = 0; x < GAME_WIDTH; x++)
             bufferPos += sprintf(buffer + bufferPos, "\033[38;2;%d;%d;%dm%c\033[0m", cellView[y][x].color.r, cellView[y][x].color.g, cellView[y][x].color.b, cellView[y][x].sym);
-        }
         sprintf(buffer + bufferPos, "\n");
         bufferPos++;
     }
