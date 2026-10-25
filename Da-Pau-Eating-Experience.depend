@@ -7,7 +7,7 @@
 	<time.h>
 	<string.h>
 
-1792906684 source:/home/t0-ot/Documents/GitHub/Da-Pau-Eating-Experience/src/snake/main.c
+1792951837 source:/home/t0-ot/Documents/GitHub/Da-Pau-Eating-Experience/src/snake/main.c
 	<stdio.h>
 	<stdlib.h>
 	<termios.h>
@@ -16,6 +16,7 @@
 	<string.h>
 	<stdint.h>
 	<stdbool.h>
+	"../../include/engine/canvas.h"
 
 1792913798 source:/home/t0-ot/Documents/GitHub/Da-Pau-Eating-Experience/src/engine/canvas.c
 	<stdio.h>

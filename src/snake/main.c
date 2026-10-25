@@ -44,6 +44,7 @@ typedef struct {
     Canvas visuals;
 } fruitData;
 
+void baseEat(void *fruit, snakeData *snake);
 int objectPointResize(ViewPointList *data);
 int collisionCheckOne(ViewPointList *objView1, ViewPointList *objView2, int countFrom, int checkIndexObj2);
 int hiScoreCounter(int currentScore, int *highestScore);
@@ -59,6 +60,8 @@ void shiftSnakeSegments(snakeData *snakeInfo);
 int checkLife(ViewPointList snakeView, int playWidthBoundary, int playHeightBoundary);
 void snakeStamper(void *data, Canvas cellview[][GAME_WIDTH]);
 void fruitStamper(void *data, Canvas cellview[][GAME_WIDTH]);
+void handleFruitCollision(fruitData *collidedFruitData, snakeData *snakeInfo, int collidedFruitNum);
+void handleMilestoneFruit(fruitData *fruitAwardTarget, ViewPointList *snakeScore);
 
 int main(void) {
     srand(time(NULL));
@@ -131,7 +134,8 @@ int main(void) {
     fruitData normalFruitSet = {
         .fruitType = &baseFruit,
         .pointList.amt = 1,
-        .visuals = { .sym = 'P', .color.r =  0, .color.g = 255, .color.b = 0}
+        .visuals = { .sym = 'P', .color.r =  0, .color.g = 255, .color.b = 0},
+        .onEat = baseEat
     };
     normalFruitSet.pointList.points = malloc(normalFruitSet.pointList.amt * sizeof(Point));
     RenderObj normFruitSetObj = {
@@ -160,17 +164,9 @@ int main(void) {
             }
             while (1) {
                 int moveBlocked = movementInputHandler(lastDirInput);
-                int colllideWithFruit = collisionCheckOne(&normalFruitSet.pointList, &snake1.pointList, 0, 0);
-                if (colllideWithFruit > 0) {
-                    snake1.pointList.amt++;
-                    objectPointResize(&snake1.pointList);
-                    if (((snake1.pointList.amt - 2) % 10) == 0) {
-                        normalFruitSet.pointList.amt++;
-                        objectPointResize(&normalFruitSet.pointList);
-                        spawnFruit(normalFruitSet.pointList, normalFruitSet.pointList.amt-1, snake1.pointList, HALF_GAMEVIEW_BOUNDARY, GAME_HEIGHT - 1);
-                    }
-                    spawnFruit(normalFruitSet.pointList, colllideWithFruit-1, snake1.pointList, HALF_GAMEVIEW_BOUNDARY, GAME_HEIGHT - 1);
-                }
+                int collideWithFruit = collisionCheckOne(&normalFruitSet.pointList, &snake1.pointList, 0, 0);
+                if (collideWithFruit > 0)
+                    handleFruitCollision(&normalFruitSet, &snake1, collideWithFruit);
 
                 shiftSnakeSegments(&snake1);
                 snakeDirectionHandler(snake1.pointList.points, lastDirInput);
@@ -410,9 +406,22 @@ void spawnFruit(ViewPointList fruitView, int fruitNumber, ViewPointList snakeVie
 }
 
 void baseEat(void *fruit, snakeData *snake) {
-    fruitData *fruitInfo = (fruitData *)fruit;
-    defaultFruit *baseFruit = (defaultFruit *)fruitInfo->fruitType;
-    snake->pointList.amt++;
+    snake->pointList.amt += ((defaultFruit *)((fruitData *)fruit)->fruitType)->scoreAmt;
+}
+
+void handleMilestoneFruit(fruitData *fruitAwardTarget, ViewPointList *snakeScore) {
+    if (((snakeScore->amt -2) % 10) != 0)
+        return;
+    fruitAwardTarget->pointList.amt++;
+    objectPointResize(&fruitAwardTarget->pointList);
+    spawnFruit(fruitAwardTarget->pointList, fruitAwardTarget->pointList.amt-1, *snakeScore, HALF_GAMEVIEW_BOUNDARY, GAME_HEIGHT - 1);
+}
+
+void handleFruitCollision(fruitData *collidedFruitData, snakeData *snakeInfo, int collidedFruitNum) {
+    collidedFruitData->onEat(collidedFruitData, snakeInfo);
+    objectPointResize(&snakeInfo->pointList);
+    handleMilestoneFruit(collidedFruitData, &snakeInfo->pointList);
+    spawnFruit(collidedFruitData->pointList, collidedFruitNum-1, snakeInfo->pointList, HALF_GAMEVIEW_BOUNDARY, GAME_HEIGHT - 1);
 }
 
 void snakeStamper(void *data, Canvas cellview[][GAME_WIDTH]) {
