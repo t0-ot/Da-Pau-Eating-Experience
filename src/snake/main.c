@@ -62,6 +62,7 @@ void snakeStamper(void *data, Canvas cellview[][GAME_WIDTH]);
 void fruitStamper(void *data, Canvas cellview[][GAME_WIDTH]);
 void handleFruitCollision(fruitData *collidedFruitData, snakeData *snakeInfo, int collidedFruitNum);
 void handleMilestoneFruit(fruitData *fruitAwardTarget, ViewPointList *snakeScore);
+void handleDeath(snakeData *snake1, ViewPointList *fruit, Point *lastDirInput);
 
 int main(void) {
     srand(time(NULL));
@@ -172,18 +173,8 @@ int main(void) {
                 snakeDirectionHandler(snake1.pointList.points, lastDirInput);
                 snake1.alive = checkLife(snake1.pointList, GAME_WIDTH - 1, HALF_GAMEVIEW_BOUNDARY);
 
-                if (!(snake1.alive) && !moveBlocked && !(lastDirInput[0].posX == 0 && lastDirInput[0].posY == 0)) {
-                    snake1.pointList.points[0].posX = 20;
-                    snake1.pointList.points[0].posY = 10;
-                    lastDirInput[0].posY = 0;
-                    lastDirInput[0].posX = 0;
-                    snake1.pointList.amt = 2;
-                    snake1.alive = 1;
-                    normalFruitSet.pointList.amt = 1;
-                    objectPointResize(&snake1.pointList);
-                    objectPointResize(&normalFruitSet.pointList);
-                    spawnFruit(normalFruitSet.pointList, 0, snake1.pointList, HALF_GAMEVIEW_BOUNDARY, GAME_HEIGHT - 1);
-                }
+                if (!(snake1.alive) && !moveBlocked && !(lastDirInput[0].posX == 0 && lastDirInput[0].posY == 0))
+                    handleDeath(&snake1, &normalFruitSet.pointList, lastDirInput);
                 scoreNumbers[0].score = snake1.pointList.amt;
                 scoreNumbers[1].score = hiScoreCounter(snake1.pointList.amt, &currentHiScore);
 
@@ -393,6 +384,19 @@ int checkLife(ViewPointList snakeView, int playWidthBoundary, int playHeightBoun
     if (collisionCheckOne(&snakeView, &snakeView, 1, 0))
         return 0;
     return 1;
+}
+
+void handleDeath(snakeData *snake1, ViewPointList *fruit, Point *lastDirInput){
+    snake1->pointList.points[0].posX = 20;
+    snake1->pointList.points[0].posY = 10;
+    lastDirInput[0].posY = 0;
+    lastDirInput[0].posX = 0;
+    snake1->pointList.amt = 2;
+    snake1->alive = 1;
+    fruit->amt = 1;
+    objectPointResize(&snake1->pointList);
+    objectPointResize(fruit);
+    spawnFruit(*fruit,  0, snake1->pointList, HALF_GAMEVIEW_BOUNDARY, GAME_HEIGHT - 1);
 }
 
 void disable_raw_mode() {
