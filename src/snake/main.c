@@ -159,9 +159,9 @@ int main(void) {
             return 0;
         case 0:
             enable_raw_mode();
-            for (int i = 0; i < normalFruitSet.pointList.amt; i++) {
+            for (int i = 0; i < normalFruitSet.pointList.amt; i++)
                 spawnFruit(normalFruitSet.pointList, i, snake1.pointList, GAME_WIDTH - 41, GAME_HEIGHT - 1);
-            }
+
             while (1) {
                 int moveBlocked = movementInputHandler(lastDirInput);
                 int collideWithFruit = collisionCheckOne(&normalFruitSet.pointList, &snake1.pointList, 0, 0);
@@ -172,7 +172,7 @@ int main(void) {
                 snakeDirectionHandler(snake1.pointList.points, lastDirInput);
                 snake1.alive = checkLife(snake1.pointList, GAME_WIDTH - 1, HALF_GAMEVIEW_BOUNDARY);
 
-                if (!(snake1.alive) && !moveBlocked) {
+                if (!(snake1.alive) && !moveBlocked && !(lastDirInput[0].posX == 0 && lastDirInput[0].posY == 0)) {
                     snake1.pointList.points[0].posX = 20;
                     snake1.pointList.points[0].posY = 10;
                     lastDirInput[0].posY = 0;
