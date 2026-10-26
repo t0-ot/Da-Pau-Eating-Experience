@@ -182,6 +182,7 @@ int main(void) {
                     normalFruitSet.pointList.amt = 1;
                     objectPointResize(&snake1.pointList);
                     objectPointResize(&normalFruitSet.pointList);
+                    spawnFruit(normalFruitSet.pointList, 0, snake1.pointList, HALF_GAMEVIEW_BOUNDARY, GAME_HEIGHT - 1);
                 }
                 scoreNumbers[0].score = snake1.pointList.amt;
                 scoreNumbers[1].score = hiScoreCounter(snake1.pointList.amt, &currentHiScore);
