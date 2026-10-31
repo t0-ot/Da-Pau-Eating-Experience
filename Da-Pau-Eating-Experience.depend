@@ -7,22 +7,65 @@
 	<time.h>
 	<string.h>
 
-1792990170 source:/home/t0-ot/Documents/GitHub/Da-Pau-Eating-Experience/src/snake/main.c
+1793411294 source:/home/t0-ot/Documents/GitHub/Da-Pau-Eating-Experience/src/snake/main.c
+	<stdlib.h>
+	<time.h>
+	"../../include/snake/game.h"
+
+1793291074 source:/home/t0-ot/Documents/GitHub/Da-Pau-Eating-Experience/src/engine/canvas.c
+	<stdio.h>
+	"../../include/engine/canvas.h"
+
+1793291061 /home/t0-ot/Documents/GitHub/Da-Pau-Eating-Experience/include/engine/canvas.h
+	<stdint.h>
+	<string.h>
+
+1793282353 source:/home/t0-ot/Documents/GitHub/Da-Pau-Eating-Experience/src/engine/utils.c
+	<stdio.h>
+	<stdlib.h>
+	"../../include/engine/utils.h"
+
+1793282309 /home/t0-ot/Documents/GitHub/Da-Pau-Eating-Experience/include/engine/utils.h
+	"../../include/engine/canvas.h"
+
+1793280823 /home/t0-ot/Documents/GitHub/Da-Pau-Eating-Experience/include/engine/terminal.h
+
+1793409554 source:/home/t0-ot/Documents/GitHub/Da-Pau-Eating-Experience/src/engine/terminal.c
+	<stdio.h>
+	<termios.h>
+	<unistd.h>
+	"../../include/engine/terminal.h"
+
+1793283594 source:/home/t0-ot/Documents/GitHub/Da-Pau-Eating-Experience/src/snake/snake_logic.c
+	<string.h>
+	<stdio.h>
+	<stdlib.h>
+	"../../include/engine/terminal.h"
+	"../../include/engine/canvas.h"
+	"../../include/engine/utils.h"
+	"../../include/snake/snake_logic.h"
+
+1793283612 /home/t0-ot/Documents/GitHub/Da-Pau-Eating-Experience/include/snake/snake_logic.h
+
+1793284113 source:/home/t0-ot/Documents/GitHub/Da-Pau-Eating-Experience/src/snake/game_render.c
+	"../../include/snake/game_render.h"
+	"../../include/snake/snake_logic.h"
+
+1793284028 /home/t0-ot/Documents/GitHub/Da-Pau-Eating-Experience/include/snake/game_render.h
+	"../../include/engine/canvas.h"
+
+1793411089 /home/t0-ot/Documents/GitHub/Da-Pau-Eating-Experience/include/snake/game.h
+	"../../include/engine/canvas.h"
+	"../../include/snake/snake_logic.h"
+
+1793409041 source:/home/t0-ot/Documents/GitHub/Da-Pau-Eating-Experience/src/snake/game.c
 	<stdio.h>
 	<stdlib.h>
 	<termios.h>
 	<unistd.h>
-	<time.h>
-	<string.h>
-	<stdint.h>
-	<stdbool.h>
+	"../../include/snake/game.h"
 	"../../include/engine/canvas.h"
-
-1792913798 source:/home/t0-ot/Documents/GitHub/Da-Pau-Eating-Experience/src/engine/canvas.c
-	<stdio.h>
-	"../../include/engine/canvas.h"
-
-1792914287 /home/t0-ot/Documents/GitHub/Da-Pau-Eating-Experience/include/engine/canvas.h
-	<stdint.h>
-	<string.h>
+	"../../include/engine/terminal.h"
+	"../../include/engine/utils.h"
+	"../../include/snake/game_render.h"
 

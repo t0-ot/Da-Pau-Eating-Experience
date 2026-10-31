@@ -37,10 +37,30 @@
 			<Add option="-fsanitize=address" />
 		</Linker>
 		<Unit filename="include/engine/canvas.h" />
+		<Unit filename="include/engine/terminal.h" />
+		<Unit filename="include/engine/utils.h" />
+		<Unit filename="include/snake/game.h" />
+		<Unit filename="include/snake/game_render.h" />
+		<Unit filename="include/snake/snake_logic.h" />
 		<Unit filename="src/engine/canvas.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="src/engine/terminal.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/engine/utils.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/snake/game.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/snake/game_render.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="src/snake/main.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/snake/snake_logic.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Extensions>
